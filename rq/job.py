@@ -103,7 +103,7 @@ yet been evaluated.
 """
 
 
-def cancel_job(job_id: str, connection: 'Redis', serializer=None, enqueue_dependents: bool = False):
+def cancel_job(job_id: str, connection: 'Redis', serializer: Optional[str]=None, enqueue_dependents: bool = False) -> None:
     """Cancels the job with the given job ID, preventing execution.
     Use with caution. This will discard any job info (i.e. it can't be requeued later).
 
@@ -134,7 +134,7 @@ def get_current_job(connection: Optional['Redis'] = None, job_class: Optional['J
     return _job_stack.top
 
 
-def requeue_job(job_id: str, connection: 'Redis', serializer=None) -> 'Job':
+def requeue_job(job_id: str, connection: 'Redis', serializer: Optional[str]=None) -> 'Job':
     """Fetches a Job by ID and requeues it using the `requeue()` method.
 
     Args:
@@ -155,7 +155,7 @@ class Job:
     _dependency: Optional['Job']
     redis_job_namespace_prefix = 'rq:job:'
 
-    def __init__(self, id: Optional[str] = None, connection: Optional['Redis'] = None, serializer=None):
+    def __init__(self, id: Optional[str] = None, connection: Optional['Redis'] = None, serializer: Optional[str]=None) -> None:
         # Manually check for the presence of the connection argument to preserve
         # backwards compatibility during the transition to RQ v2.0.0.
         if not connection:
@@ -463,7 +463,7 @@ class Job:
         return self.get_status() == JobStatus.STOPPED
 
     @property
-    def _dependency_id(self):
+    def _dependency_id(self) -> str | None:
         """Returns the first item in self._dependency_ids. Present to
         preserve compatibility with third party packages.
         """
@@ -1016,7 +1016,7 @@ class Job:
                 self._exc_info = as_text(raw_exc_info)
 
     # Persistence
-    def refresh(self):  # noqa
+    def refresh(self) -> None:  # noqa
         """Overwrite the current instance's properties with the values in the
         corresponding Redis key.
 
@@ -1105,7 +1105,7 @@ class Job:
 
         return obj
 
-    def save(self, pipeline: Optional['Pipeline'] = None, include_meta: bool = True, include_result: bool = True):
+    def save(self, pipeline: Optional['Pipeline'] = None, include_meta: bool = True, include_result: bool = True) -> None:
         """Dumps the current job instance to its corresponding Redis key.
 
         Exclude saving the `meta` dictionary by setting
@@ -1141,7 +1141,7 @@ class Job:
 
         return self.redis_server_version
 
-    def save_meta(self):
+    def save_meta(self) -> None:
         """Stores job meta from the job instance to the corresponding Redis key."""
         meta = self.serializer.dumps(self.meta)
         self.connection.hset(self.key, 'meta', meta)
@@ -1279,7 +1279,7 @@ class Job:
 
     def delete(
         self, pipeline: Optional['Pipeline'] = None, remove_from_queue: bool = True, delete_dependents: bool = False
-    ):
+    ) -> None:
         """Cancels the job and deletes the job hash from Redis. Jobs depending
         on this job can optionally be deleted as well.
 
@@ -1303,7 +1303,7 @@ class Job:
 
         connection.delete(self.key, self.dependents_key, self.dependencies_key)
 
-    def delete_dependents(self, pipeline: Optional['Pipeline'] = None):
+    def delete_dependents(self, pipeline: Optional['Pipeline'] = None) -> None:
         """Delete jobs depending on this job.
 
         Args:
@@ -1335,7 +1335,7 @@ class Job:
             assert self is _job_stack.pop()
         return self._result
 
-    def prepare_for_execution(self, worker_name: str, pipeline: 'Pipeline'):
+    def prepare_for_execution(self, worker_name: str, pipeline: 'Pipeline') -> None:
         """Prepares the job for execution, setting the worker name,
         heartbeat information, status and other metadata before execution begins.
 
